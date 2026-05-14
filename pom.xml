@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.mcode</groupId>
+        <artifactId>m-code-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>m-code-parent</relativePath>
+    </parent>
+
+    <artifactId>m-code</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>m-code-parent</module>
+        <module>m-code-common</module>
+        <module>m-code-gateway</module>
+        <module>m-code-user</module>
+        <module>m-code-question</module>
+        <module>m-code-judge</module>
+        <module>m-code-exam</module>
+        <module>m-code-knowledge</module>
+    </modules>
+
+</project>

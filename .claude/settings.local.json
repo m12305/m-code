@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where mvn *)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Read(//c/Users/LENOVO/.m2/wrapper/**)",
+      "Bash(find /c -name \"mvn\" -type f)"
+    ]
+  }
+}

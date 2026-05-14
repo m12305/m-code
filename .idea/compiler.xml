@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="m-code-question" />
+        <module name="m-code-knowledge" />
+        <module name="m-code-gateway" />
+        <module name="m-code-user" />
+        <module name="m-code-exam" />
+        <module name="m-code-judge" />
+        <module name="m-code-common" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="m-code-common" options="-parameters" />
+      <module name="m-code-exam" options="-parameters" />
+      <module name="m-code-gateway" options="-parameters" />
+      <module name="m-code-judge" options="-parameters" />
+      <module name="m-code-knowledge" options="-parameters" />
+      <module name="m-code-question" options="-parameters" />
+      <module name="m-code-user" options="-parameters" />
+    </option>
+  </component>
+</project>
