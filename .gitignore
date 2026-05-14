@@ -1,6 +1,7 @@
 # Compiled class file
 *.class
-
+# 忽略所有模块的 target 目录
+**/target/
 # Log file
 *.log
 
