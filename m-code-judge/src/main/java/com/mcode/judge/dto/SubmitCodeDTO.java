@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 public class SubmitCodeDTO {
     private Long questionId;
-    private String code;
+    private String answer;
     private Integer language;
 }

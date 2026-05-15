@@ -14,7 +14,7 @@ public class Submission extends BaseEntity {
 
     private Long userId;
     private Long questionId;
-    private String code;
+    private String answer;
     private LanguageEnum language;
     private JudgeStatusEnum status;
     private Integer timeUsed;
