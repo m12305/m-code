@@ -70,12 +70,14 @@ public class JudgeServiceImpl implements JudgeService {
                 new LambdaQueryWrapper<JudgeResult>().eq(JudgeResult::getSubmissionId, submissionId));
     }
 
+
+    //解析题目类型
     private QuestionTypeEnum parseType(String questionJson) {
         try {
             JsonNode node = objectMapper.readTree(questionJson);
-            int typeCode = node.get("type").asInt();
+            String typeCode = node.get("type").asText();
             for (QuestionTypeEnum t : QuestionTypeEnum.values()) {
-                if (t.getCode() == typeCode) {
+                if (t.toString().equals(typeCode)) {
                     return t;
                 }
             }

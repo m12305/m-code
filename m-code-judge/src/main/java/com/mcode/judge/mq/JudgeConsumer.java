@@ -1,11 +1,14 @@
 package com.mcode.judge.mq;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcode.common.enums.JudgeStatusEnum;
 import com.mcode.judge.entity.JudgeResult;
 import com.mcode.judge.entity.Submission;
 import com.mcode.judge.mapper.JudgeResultMapper;
 import com.mcode.judge.mapper.SubmissionMapper;
+import com.mcode.judge.utils.Judge0Client;
+import com.mcode.judge.utils.Judge0Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -23,6 +26,7 @@ public class JudgeConsumer {
     private final JudgeResultMapper judgeResultMapper;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final Judge0Client judge0Client;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE)
     public void handleJudge(Long submissionId) {
@@ -55,9 +59,10 @@ public class JudgeConsumer {
     }
 
     private void doJudge(Submission submission, String questionJson) throws Exception {
-        String testCasesStr = objectMapper.readTree(questionJson).get("testCases").asText();
+        JsonNode question = objectMapper.readTree(questionJson);
+        String testCasesStr = question.has("testCases") && !question.get("testCases").isNull()
+                ? question.get("testCases").asText() : null;
 
-        // 临时实现：如果无测试用例则直接通过
         if (testCasesStr == null || testCasesStr.isEmpty()) {
             submission.setStatus(JudgeStatusEnum.ACCEPTED);
             submission.setTimeUsed(0);
@@ -75,20 +80,57 @@ public class JudgeConsumer {
             return;
         }
 
-        // TODO: 真正的代码编译运行与测试用例比对，当前暂时标记通过
-        submission.setStatus(JudgeStatusEnum.ACCEPTED);
-        submission.setTimeUsed(100);
-        submission.setMemoryUsed(10240);
+        JsonNode testCases = objectMapper.readTree(testCasesStr);
+        Integer languageCode = submission.getLanguage() != null ? submission.getLanguage().getCode() : null;
+
+        int maxTime = 0;
+        int maxMemory = 0;
+        JudgeStatusEnum finalStatus = JudgeStatusEnum.ACCEPTED;
+
+        for (JsonNode tc : testCases) {
+            String input = tc.has("input") ? tc.get("input").asText() : "";
+            String expectedOutput = tc.has("output") ? tc.get("output").asText() : "";
+
+            String testCaseName = tc.has("name") ? tc.get("name").asText() : "TestCase";
+
+            Judge0Result jr = judge0Client.judge(submission.getAnswer(), languageCode, input, expectedOutput);
+            JudgeStatusEnum status = judge0Client.mapStatus(jr.getStatusId());
+
+//            JudgeResult result = new JudgeResult();
+//            result.setSubmissionId(submission.getId());
+//            result.setTestCaseName(testCaseName);
+//            result.setStatus(status);
+//            result.setActualOutput(jr.getStdout());
+//            result.setErrorMessage(jr.getStderr() != null ? jr.getStderr() : jr.getCompileOutput());
+//            result.setTimeUsed(parseTime(jr.getTime()));
+//            result.setMemoryUsed(jr.getMemory());
+//            judgeResultMapper.insert(result);
+
+            maxTime = Math.max(maxTime, parseTime(jr.getTime()));
+            maxMemory = Math.max(maxMemory, jr.getMemory());
+
+            if (status != JudgeStatusEnum.ACCEPTED && finalStatus == JudgeStatusEnum.ACCEPTED) {
+                finalStatus = status;
+            }
+        }
+
+        submission.setStatus(finalStatus);
+        submission.setTimeUsed(maxTime);
+        submission.setMemoryUsed(maxMemory);
         submissionMapper.updateById(submission);
 
-        JudgeResult result = new JudgeResult();
-        result.setSubmissionId(submission.getId());
-        result.setTestCaseName("默认");
-        result.setStatus(JudgeStatusEnum.ACCEPTED);
-        result.setTimeUsed(100);
-        result.setMemoryUsed(10240);
-        judgeResultMapper.insert(result);
+        log.info("编程题判题完成: submissionId={}, status={}, time={}ms, memory={}KB",
+                submission.getId(), finalStatus, maxTime, maxMemory);
+    }
 
-        log.info("编程题判题完成: submissionId={}, status={}", submission.getId(), submission.getStatus());
+    private int parseTime(String timeStr) {
+        if (timeStr == null || timeStr.isEmpty()) {
+            return 0;
+        }
+        try {
+            return (int) (Double.parseDouble(timeStr) * 1000);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }

@@ -39,7 +39,7 @@ public class TrueFalseJudgeStrategy implements JudgeStrategy {
             log.error("判断题判题异常: submissionId={}", submission.getId(), e);
             throw new BusinessException("判题过程出错");
         }
-        submissionMapper.updateById(submission);
+        submissionMapper.insert(submission);
         return submission;
     }
 
@@ -49,7 +49,6 @@ public class TrueFalseJudgeStrategy implements JudgeStrategy {
         submission.setQuestionId(questionId);
         submission.setAnswer(answer);
         submission.setStatus(JudgeStatusEnum.PENDING);
-        submissionMapper.insert(submission);
         return submission;
     }
 }

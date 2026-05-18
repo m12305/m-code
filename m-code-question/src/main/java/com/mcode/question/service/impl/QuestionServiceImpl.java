@@ -4,7 +4,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcode.common.enums.DifficultyEnum;
+import com.mcode.common.enums.QuestionTypeEnum;
 import com.mcode.common.exception.BusinessException;
+import com.mcode.question.dto.QuestionAddDTO;
 import com.mcode.question.entity.Category;
 import com.mcode.question.entity.Question;
 import com.mcode.question.entity.Section;
@@ -78,7 +81,29 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public void addQuestion(Question question) {
+    public void addQuestion(QuestionAddDTO dto) {
+
+        // 1. 新建 Question 对象
+        Question question = new Question();
+        // 2. 复制普通属性
+        question.setTitle(dto.getTitle());
+        question.setDescription(dto.getDescription());
+        question.setTemplateCode(dto.getTemplateCode());
+        question.setTestCases(dto.getTestCases());
+        question.setCategoryId(dto.getCategoryId());
+        question.setOptions(dto.getOptions());
+        question.setCorrectAnswer(dto.getCorrectAnswer());
+        question.setReferenceAnswer(dto.getReferenceAnswer());
+
+        // 3. 字符串 → 枚举转换（核心！）
+        question.setDifficulty(DifficultyEnum.valueOf(dto.getDifficulty()));
+        question.setType(QuestionTypeEnum.valueOf(dto.getType()));
+
+        // 4. 默认值
+        question.setAcceptedCount(0);
+        question.setSubmissionCount(0);
+        question.setStatus(1); // 上架
+
         questionMapper.insert(question);
     }
 

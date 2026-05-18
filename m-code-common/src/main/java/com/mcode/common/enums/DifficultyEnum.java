@@ -1,6 +1,8 @@
 package com.mcode.common.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.deser.std.EnumDeserializer;
 import lombok.Getter;
 
 //题目难度枚举

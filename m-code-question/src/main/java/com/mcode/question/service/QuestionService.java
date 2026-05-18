@@ -1,6 +1,7 @@
 package com.mcode.question.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mcode.question.dto.QuestionAddDTO;
 import com.mcode.question.entity.Category;
 import com.mcode.question.entity.Question;
 import com.mcode.question.entity.Section;
@@ -11,7 +12,7 @@ import java.util.List;
 public interface QuestionService {
     Page<Question> pageQuestion(Integer pageNum, Integer pageSize, Long categoryId, Integer difficulty, Integer type, Long sectionId);
     Question getQuestionDetail(Long id);
-    void addQuestion(Question question);
+    void addQuestion(QuestionAddDTO dto);
     void updateQuestion(Question question);
     void deleteQuestion(Long id);
 

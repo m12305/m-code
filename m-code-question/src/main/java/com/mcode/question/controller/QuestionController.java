@@ -3,6 +3,7 @@ package com.mcode.question.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mcode.common.exception.BusinessException;
 import com.mcode.common.result.Result;
+import com.mcode.question.dto.QuestionAddDTO;
 import com.mcode.question.entity.Category;
 import com.mcode.question.entity.Question;
 import com.mcode.question.entity.Section;
@@ -43,25 +44,25 @@ public class QuestionController {
      * 获取题目详情
      * @param id 题目id
      */
-    @GetMapping("/{id}")
+    @GetMapping("/detail/{id}")
     public Result<Question> detail(@PathVariable Long id) {
         return Result.ok(questionService.getQuestionDetail(id));
     }
 
     /**
      * 添加题目，应该进行参数校验
-     * @param question 题目信息
+     * @param dto 题目信息
      */
-    @PostMapping
-    public Result<Void> add(@RequestBody Question question) {
-        questionService.addQuestion(question);
+    @PostMapping("/add")
+    public Result<Void> add(@RequestBody QuestionAddDTO dto) {
+        questionService.addQuestion(dto);
         return Result.ok();
     }
 
     /**
      * 修改题目
      */
-    @PutMapping
+    @PutMapping("/update")
     public Result<Void> update(@RequestBody Question question) {
         questionService.updateQuestion(question);
         return Result.ok();
@@ -70,7 +71,7 @@ public class QuestionController {
     /**
      * 删除题目
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         questionService.deleteQuestion(id);
         return Result.ok();
