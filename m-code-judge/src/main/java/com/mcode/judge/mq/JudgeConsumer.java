@@ -96,15 +96,15 @@ public class JudgeConsumer {
             Judge0Result jr = judge0Client.judge(submission.getAnswer(), languageCode, input, expectedOutput);
             JudgeStatusEnum status = judge0Client.mapStatus(jr.getStatusId());
 
-//            JudgeResult result = new JudgeResult();
-//            result.setSubmissionId(submission.getId());
-//            result.setTestCaseName(testCaseName);
-//            result.setStatus(status);
-//            result.setActualOutput(jr.getStdout());
-//            result.setErrorMessage(jr.getStderr() != null ? jr.getStderr() : jr.getCompileOutput());
-//            result.setTimeUsed(parseTime(jr.getTime()));
-//            result.setMemoryUsed(jr.getMemory());
-//            judgeResultMapper.insert(result);
+            JudgeResult result = new JudgeResult();
+            result.setSubmissionId(submission.getId());
+            result.setTestCaseName(testCaseName);
+            result.setStatus(status);
+            result.setActualOutput(jr.getStdout());
+            result.setErrorMessage(jr.getStderr() != null ? jr.getStderr() : jr.getCompileOutput());
+            result.setTimeUsed(parseTime(jr.getTime()));
+            result.setMemoryUsed(jr.getMemory());
+            judgeResultMapper.insert(result);
 
             maxTime = Math.max(maxTime, parseTime(jr.getTime()));
             maxMemory = Math.max(maxMemory, jr.getMemory());

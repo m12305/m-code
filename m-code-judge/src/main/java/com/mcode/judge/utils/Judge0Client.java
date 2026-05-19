@@ -21,7 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class Judge0Client {
 
-    private static final String BASE_URL = "http://127.0.0.1:2358";
+    private static final String BASE_URL = "http://124.222.143.37:2358";
 
     private static final Map<Integer, Integer> LANGUAGE_MAP = Map.of(
             1, 62,  // JAVA
@@ -54,7 +54,7 @@ public class Judge0Client {
 
         String url = BASE_URL + "/submissions?base64_encoded=false&wait=true";
         //log.info("调用Judge0判题: langId={}, stdin={}, body={}", langId, stdin, body);
-        log.info("调用Judge0判题: langId={}, stdin={}", langId, stdin);
+        log.info("调用Judge0判题: langId={}, stdin={}, expected_output={}", langId, stdin, expectedOutput);
 
         JsonNode response = restTemplate.postForObject(url, request, JsonNode.class);
 

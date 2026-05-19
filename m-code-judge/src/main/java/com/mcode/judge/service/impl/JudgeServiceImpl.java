@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcode.common.enums.QuestionTypeEnum;
 import com.mcode.common.exception.BusinessException;
-import com.mcode.judge.dto.SubmitCodeDTO;
+import com.mcode.common.dto.SubmitCodeDTO;
 import com.mcode.judge.entity.JudgeResult;
 import com.mcode.judge.entity.Submission;
 import com.mcode.judge.mapper.JudgeResultMapper;

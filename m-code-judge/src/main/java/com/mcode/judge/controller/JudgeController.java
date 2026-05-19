@@ -2,7 +2,7 @@ package com.mcode.judge.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mcode.common.result.Result;
-import com.mcode.judge.dto.SubmitCodeDTO;
+import com.mcode.common.dto.SubmitCodeDTO;
 import com.mcode.judge.entity.JudgeResult;
 import com.mcode.judge.entity.Submission;
 import com.mcode.judge.service.JudgeService;

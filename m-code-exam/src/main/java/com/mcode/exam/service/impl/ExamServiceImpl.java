@@ -2,24 +2,43 @@ package com.mcode.exam.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mcode.common.enums.JudgeStatusEnum;
 import com.mcode.common.exception.BusinessException;
+import com.mcode.common.result.Result;
+import com.mcode.exam.dto.CreateExamDTO;
+import com.mcode.exam.dto.ExamJudgeMessage;
+import com.mcode.exam.dto.JudgeSubmissionVO;
+import com.mcode.exam.dto.SubmitExamDTO;
 import com.mcode.exam.entity.Exam;
+import com.mcode.exam.entity.ExamAnswer;
+import com.mcode.exam.entity.ExamQuestion;
 import com.mcode.exam.entity.ExamRecord;
+import com.mcode.exam.feign.JudgeFeignClient;
+import com.mcode.exam.mapper.ExamAnswerMapper;
 import com.mcode.exam.mapper.ExamMapper;
+import com.mcode.exam.mapper.ExamQuestionMapper;
 import com.mcode.exam.mapper.ExamRecordMapper;
+import com.mcode.exam.mq.ExamRabbitMQConfig;
 import com.mcode.exam.service.ExamService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExamServiceImpl implements ExamService {
 
     private final ExamMapper examMapper;
     private final ExamRecordMapper examRecordMapper;
+    private final ExamQuestionMapper examQuestionMapper;
+    private final ExamAnswerMapper examAnswerMapper;
+    private final JudgeFeignClient judgeFeignClient;
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     public Page<Exam> pageExam(Integer pageNum, Integer pageSize) {
@@ -38,8 +57,34 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public void addExam(Exam exam) {
+    public List<ExamQuestion> getExamQuestions(Long examId) {
+        return examQuestionMapper.selectList(
+                new LambdaQueryWrapper<ExamQuestion>()
+                        .eq(ExamQuestion::getExamId, examId)
+                        .orderByAsc(ExamQuestion::getSort));
+    }
+
+    @Override
+    public void addExam(CreateExamDTO dto) {
+        Exam exam = new Exam();
+        exam.setTitle(dto.getTitle());
+        exam.setDescription(dto.getDescription());
+        exam.setDuration(dto.getDuration());
+        exam.setStartTime(dto.getStartTime());
+        exam.setEndTime(dto.getEndTime());
+        exam.setTotalScore(dto.getQuestions().stream()
+                .mapToInt(CreateExamDTO.ExamQuestionDTO::getScore).sum());
+        exam.setStatus(1);
         examMapper.insert(exam);
+
+        for (CreateExamDTO.ExamQuestionDTO q : dto.getQuestions()) {
+            ExamQuestion eq = new ExamQuestion();
+            eq.setExamId(exam.getId());
+            eq.setQuestionId(q.getQuestionId());
+            eq.setScore(q.getScore());
+            eq.setSort(q.getSort());
+            examQuestionMapper.insert(eq);
+        }
     }
 
     @Override
@@ -64,7 +109,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public void submitExam(Long examId, Long userId) {
+    public void submitExam(Long examId, Long userId, SubmitExamDTO dto) {
         ExamRecord record = examRecordMapper.selectOne(
                 new LambdaQueryWrapper<ExamRecord>()
                         .eq(ExamRecord::getExamId, examId)
@@ -73,9 +118,39 @@ public class ExamServiceImpl implements ExamService {
         if (record == null) {
             throw new BusinessException("未找到考试记录");
         }
-        record.setStatus(2);
+
+        List<ExamQuestion> examQuestions = examQuestionMapper.selectList(
+                new LambdaQueryWrapper<ExamQuestion>().eq(ExamQuestion::getExamId, examId));
+
+        for (SubmitExamDTO.AnswerDTO answerDTO : dto.getAnswers()) {
+            ExamQuestion eq = examQuestions.stream()
+                    .filter(q -> q.getQuestionId().equals(answerDTO.getQuestionId()))
+                    .findFirst().orElse(null);
+            if (eq == null) {
+                continue;
+            }
+
+            ExamAnswer examAnswer = new ExamAnswer();
+            examAnswer.setExamId(examId);
+            examAnswer.setUserId(userId);
+            examAnswer.setQuestionId(answerDTO.getQuestionId());
+            examAnswer.setAnswer(answerDTO.getAnswer());
+            examAnswer.setLanguage(answerDTO.getLanguage());
+            examAnswer.setStatus(JudgeStatusEnum.PENDING);
+            examAnswer.setScore(0);
+            examAnswerMapper.insert(examAnswer);
+        }
+
+        record.setStatus(4);
         record.setSubmitTime(LocalDateTime.now());
+        record.setTotalScore(0);
         examRecordMapper.updateById(record);
+
+        rabbitTemplate.convertAndSend(ExamRabbitMQConfig.EXAM_JUDGE_EXCHANGE,
+                ExamRabbitMQConfig.EXAM_JUDGE_ROUTING_KEY,
+                new ExamJudgeMessage(examId, userId));
+
+        log.info("交卷完成: examId={}, userId={}", examId, userId);
     }
 
     @Override
@@ -92,5 +167,72 @@ public class ExamServiceImpl implements ExamService {
                 new LambdaQueryWrapper<ExamRecord>()
                         .eq(ExamRecord::getExamId, examId)
                         .orderByDesc(ExamRecord::getTotalScore));
+    }
+
+    @Override
+    public ExamRecord getMyExamRecord(Long examId, Long userId) {
+        ExamRecord record = examRecordMapper.selectOne(
+                new LambdaQueryWrapper<ExamRecord>()
+                        .eq(ExamRecord::getExamId, examId)
+                        .eq(ExamRecord::getUserId, userId));
+        if (record == null) {
+            throw new BusinessException("未找到考试记录");
+        }
+        if (record.getStatus() == 4 || record.getStatus() == 3) {
+            refreshExamRecord(record);
+        }
+        return record;
+    }
+
+    private void refreshExamRecord(ExamRecord record) {
+        List<ExamAnswer> answers = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>()
+                        .eq(ExamAnswer::getExamId, record.getExamId())
+                        .eq(ExamAnswer::getUserId, record.getUserId()));
+
+        boolean hasPendingOrRunning = false;
+        int totalScore = 0;
+
+        for (ExamAnswer answer : answers) {
+            JudgeStatusEnum status = answer.getStatus();
+            if (status == JudgeStatusEnum.PENDING || status == JudgeStatusEnum.RUNNING) {
+                if (answer.getSubmissionId() != null) {
+                    try {
+                        //todo JudgeSubmissionVO 和 submission 结构不一样
+                        Result<JudgeSubmissionVO> result = judgeFeignClient.getSubmission(answer.getSubmissionId());
+                        JudgeSubmissionVO sub = result.getData();
+                        if (sub != null && sub.getStatus() != null) {
+                            status = sub.getStatus();
+                            answer.setStatus(status);
+                            examAnswerMapper.updateById(answer);
+                        }
+                    } catch (Exception e) {
+                        log.error("获取判题状态失败: submissionId={}", answer.getSubmissionId(), e);
+                    }
+                }
+            }
+
+            if (status == JudgeStatusEnum.PENDING || status == JudgeStatusEnum.RUNNING) {
+                hasPendingOrRunning = true;
+            } else if (status == JudgeStatusEnum.ACCEPTED) {
+                ExamQuestion eq = examQuestionMapper.selectOne(
+                        new LambdaQueryWrapper<ExamQuestion>()
+                                .eq(ExamQuestion::getExamId, record.getExamId())
+                                .eq(ExamQuestion::getQuestionId, answer.getQuestionId()));
+                int questionScore = eq != null ? eq.getScore() : 0;
+                answer.setScore(questionScore);
+                examAnswerMapper.updateById(answer);
+                totalScore += questionScore;
+            }
+        }
+
+        if (!hasPendingOrRunning) {
+            record.setStatus(2);
+            record.setTotalScore(totalScore);
+            examRecordMapper.updateById(record);
+        } else if (record.getStatus() != 3) {
+            record.setStatus(3);
+            examRecordMapper.updateById(record);
+        }
     }
 }
