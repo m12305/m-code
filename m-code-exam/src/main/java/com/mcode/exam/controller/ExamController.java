@@ -43,8 +43,8 @@ public class ExamController {
     }
 
     @PutMapping("/update")
-    public Result<Void> update(@RequestBody Exam exam) {
-        examService.updateExam(exam);
+    public Result<Void> update(@RequestBody CreateExamDTO dto) {
+        examService.updateExam(dto);
         return Result.ok();
     }
 

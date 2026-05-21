@@ -1,8 +1,7 @@
 package com.mcode.common.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.deser.std.EnumDeserializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 @Getter
@@ -14,6 +13,7 @@ public enum QuestionTypeEnum {
     TRUE_FALSE(4, "判断题");
 
     @EnumValue
+    @JsonValue
     private final Integer code;
     private final String desc;
 

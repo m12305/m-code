@@ -1,6 +1,7 @@
 package com.mcode.common.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 //判题状态枚举
@@ -18,6 +19,7 @@ public enum JudgeStatusEnum {
     MEMORY_LIMIT_EXCEEDED(7, "内存溢出");
 
     @EnumValue
+    @JsonValue
     private final Integer code;
     private final String desc;
 

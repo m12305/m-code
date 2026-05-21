@@ -44,6 +44,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(BCrypt.hashpw(dto.getPassword()));
         user.setScore(0);
         user.setStatus(1);
+        user.setRole(0);
         userMapper.insert(user);
         return generateToken(user);
     }

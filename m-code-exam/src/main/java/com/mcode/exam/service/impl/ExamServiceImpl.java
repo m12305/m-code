@@ -22,6 +22,7 @@ import com.mcode.exam.mq.ExamRabbitMQConfig;
 import com.mcode.exam.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -88,7 +89,35 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public void updateExam(Exam exam) {
+    public void updateExam(CreateExamDTO dto) {
+        Exam exam = examMapper.selectById(dto.getId());
+        if (exam == null) {
+            throw new BusinessException("考试不存在");
+        }
+        exam.setTitle(dto.getTitle());
+        exam.setDescription(dto.getDescription());
+        exam.setDuration(dto.getDuration());
+        exam.setStartTime(dto.getStartTime());
+        exam.setEndTime(dto.getEndTime());
+
+        if (dto.getQuestions() != null) {
+            exam.setTotalScore(dto.getQuestions().stream()
+                    .mapToInt(CreateExamDTO.ExamQuestionDTO::getScore).sum());
+
+            examQuestionMapper.delete(new LambdaQueryWrapper<ExamQuestion>()
+                    .eq(ExamQuestion::getExamId, dto.getId()));
+
+            int sort = 1;
+            for (CreateExamDTO.ExamQuestionDTO q : dto.getQuestions()) {
+                ExamQuestion eq = new ExamQuestion();
+                eq.setExamId(dto.getId());
+                eq.setQuestionId(q.getQuestionId());
+                eq.setScore(q.getScore());
+                eq.setSort(q.getSort() != null ? q.getSort() : sort++);
+                examQuestionMapper.insert(eq);
+            }
+        }
+
         examMapper.updateById(exam);
     }
 
@@ -101,6 +130,18 @@ public class ExamServiceImpl implements ExamService {
         if (exam.getEndTime().isBefore(LocalDateTime.now())) {
             throw new BusinessException("考试已结束");
         }
+
+        ExamRecord existing = examRecordMapper.selectOne(
+                new LambdaQueryWrapper<ExamRecord>()
+                        .eq(ExamRecord::getExamId, examId)
+                        .eq(ExamRecord::getUserId, userId));
+        if (existing != null) {
+            if (existing.getStatus() != null && existing.getStatus() != 1) {
+                throw new BusinessException("您已完成该考试，不可重复参加");
+            }
+            return;
+        }
+
         ExamRecord record = new ExamRecord();
         record.setExamId(examId);
         record.setUserId(userId);

@@ -14,7 +14,7 @@ public interface ExamService {
     Exam getExamDetail(Long id);
     List<ExamQuestion> getExamQuestions(Long examId);
     void addExam(CreateExamDTO dto);
-    void updateExam(Exam exam);
+    void updateExam(CreateExamDTO dto);
 
     void startExam(Long examId, Long userId);
     void submitExam(Long examId, Long userId, SubmitExamDTO dto);
