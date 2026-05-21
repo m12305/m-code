@@ -22,6 +22,7 @@ import com.mcode.exam.mq.ExamRabbitMQConfig;
 import com.mcode.exam.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 

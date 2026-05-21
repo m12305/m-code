@@ -7,9 +7,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcode.common.enums.QuestionTypeEnum;
 import com.mcode.common.exception.BusinessException;
+import com.mcode.common.dto.QuestionVO;
 import com.mcode.common.dto.SubmitCodeDTO;
+import com.mcode.common.result.Result;
 import com.mcode.judge.entity.JudgeResult;
 import com.mcode.judge.entity.Submission;
+import com.mcode.judge.feign.QuestionFeignClient;
 import com.mcode.judge.mapper.JudgeResultMapper;
 import com.mcode.judge.mapper.SubmissionMapper;
 import com.mcode.judge.service.JudgeService;
@@ -33,18 +36,37 @@ public class JudgeServiceImpl implements JudgeService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     private final JudgeStrategyFactory strategyFactory;
+    private final QuestionFeignClient questionFeignClient;
 
     @Override
     public Submission submit(Long userId, SubmitCodeDTO dto) {
         String cacheKey = CACHE_KEY_PREFIX + dto.getQuestionId();
         String questionJson = stringRedisTemplate.opsForValue().get(cacheKey);
         if (StrUtil.isBlank(questionJson)) {
-            throw new BusinessException("题目缓存不存在，请先查看题目详情");
+            questionJson = fetchQuestionAndCache(dto.getQuestionId(), cacheKey);
         }
 
         QuestionTypeEnum type = parseType(questionJson);
         return strategyFactory.getStrategy(type)
                 .judge(userId, dto.getQuestionId(), dto.getAnswer(), dto.getLanguage(), questionJson);
+    }
+
+    private String fetchQuestionAndCache(Long questionId, String cacheKey) {
+        try {
+            Result<QuestionVO> result = questionFeignClient.getQuestionDetail(questionId);
+            QuestionVO question = result != null ? result.getData() : null;
+            if (question == null) {
+                throw new BusinessException("题目不存在");
+            }
+            String json = objectMapper.writeValueAsString(question);
+            //stringRedisTemplate.opsForValue().set(cacheKey, json);
+            return json;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("通过Feign获取题目失败: questionId={}", questionId, e);
+            throw new BusinessException("题目不存在");
+        }
     }
 
     @Override
