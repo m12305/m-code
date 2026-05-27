@@ -74,6 +74,12 @@ public class ExamController {
         return Result.ok(examService.getMyExamRecord(examId, userId));
     }
 
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        examService.deleteExam(id);
+        return Result.ok();
+    }
+
     @GetMapping("/{examId}/rank")
     public Result<List<ExamRecord>> rank(@PathVariable Long examId) {
         return Result.ok(examService.getExamRank(examId));

@@ -23,6 +23,7 @@
         <module>m-code-judge</module>
         <module>m-code-exam</module>
         <module>m-code-knowledge</module>
+        <module>m-code-ai</module>
     </modules>
 
 </project>

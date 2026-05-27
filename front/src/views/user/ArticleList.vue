@@ -4,6 +4,13 @@
 
     <!-- Filter Bar -->
     <div class="filter-bar">
+      <el-input
+        v-model="keyword"
+        placeholder="输入关键词搜索文章..."
+        clearable
+        style="width: 300px"
+        @keyup.enter="handleSearch"
+      />
       <el-select
         v-model="categoryId"
         placeholder="选择分类"
@@ -68,7 +75,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getKnowledgeCategoryList, getArticleList } from '@/api/knowledge'
+import { getKnowledgeCategoryList, getArticleList, searchArticles } from '@/api/knowledge'
 import { formatDate } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -78,6 +85,7 @@ const loading = ref(false)
 const categoryLoading = ref(false)
 const categoryList = ref<any[]>([])
 const categoryId = ref<number | undefined>(undefined)
+const keyword = ref('')
 const articleList = ref<any[]>([])
 const pageNum = ref(1)
 const pageSize = ref(20)
@@ -103,11 +111,20 @@ async function fetchCategories() {
 async function fetchList() {
   loading.value = true
   try {
-    const res = await getArticleList({
-      pageNum: pageNum.value,
-      pageSize: pageSize.value,
-      categoryId: categoryId.value,
-    })
+    let res
+    if (keyword.value.trim()) {
+      res = await searchArticles({
+        keyword: keyword.value.trim(),
+        pageNum: pageNum.value,
+        pageSize: pageSize.value,
+      })
+    } else {
+      res = await getArticleList({
+        pageNum: pageNum.value,
+        pageSize: pageSize.value,
+        categoryId: categoryId.value,
+      })
+    }
     articleList.value = res?.records || []
     total.value = res?.total || 0
   } catch {

@@ -1,6 +1,8 @@
 package com.mcode.common.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 //编程语言枚举
@@ -16,11 +18,22 @@ public enum LanguageEnum {
     GO(6, "Go");
 
     @EnumValue
+    @JsonValue
     private final Integer code;
     private final String desc;
 
     LanguageEnum(Integer code, String desc) {
         this.code = code;
         this.desc = desc;
+    }
+
+    @JsonCreator  // 反序列化时根据 desc 查找枚举
+    public static LanguageEnum fromDesc(String desc) {
+        for (LanguageEnum type : values()) {
+            if (type.desc.equals(desc)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Unknown question type: " + desc);
     }
 }

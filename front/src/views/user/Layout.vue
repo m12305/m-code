@@ -31,6 +31,7 @@
     <el-main class="layout-main">
       <router-view />
     </el-main>
+    <AiChatFloat v-if="showAiChat" />
   </el-container>
 </template>
 
@@ -38,10 +39,13 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import AiChatFloat from '@/components/AiChatFloat.vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+const showAiChat = computed(() => !route.path.includes('/exam/') || !route.path.includes('/taking'))
 
 const activeMenu = computed(() => {
   const path = route.path

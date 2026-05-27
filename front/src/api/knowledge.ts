@@ -18,6 +18,14 @@ export function getArticleList(params: {
   return request.get('/knowledge/article', { params })
 }
 
+export function searchArticles(params: {
+  keyword: string
+  pageNum?: number
+  pageSize?: number
+}) {
+  return request.get('/knowledge/article/search', { params })
+}
+
 export function getArticleDetail(id: string) {
   return request.get(`/knowledge/article/${id}`)
 }

@@ -36,6 +36,13 @@ public class KnowledgeController {
         return Result.ok(knowledgeService.pageArticle(pageNum, pageSize, categoryId));
     }
 
+    @GetMapping("/article/search")
+    public Result<Page<Article>> searchArticle(@RequestParam String keyword,
+                                                @RequestParam(defaultValue = "1") Integer pageNum,
+                                                @RequestParam(defaultValue = "20") Integer pageSize) {
+        return Result.ok(knowledgeService.searchArticle(keyword, pageNum, pageSize));
+    }
+
     @GetMapping("/article/{id}")
     public Result<Article> getArticle(@PathVariable Long id) {
         return Result.ok(knowledgeService.getArticleDetail(id));

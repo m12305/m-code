@@ -40,19 +40,22 @@ import { reactive, onMounted } from 'vue'
 import { getQuestionList } from '@/api/question'
 import { getExamList } from '@/api/exam'
 import { getArticleList } from '@/api/knowledge'
+import { getUserList } from '@/api/user'
 
 const stats = reactive({ questionCount: 0, examCount: 0, articleCount: 0, userCount: 0 })
 
 onMounted(async () => {
   try {
-    const [qRes, eRes, aRes] = await Promise.all([
+    const [qRes, eRes, aRes, uRes] = await Promise.all([
       getQuestionList({ pageSize: 1 }),
       getExamList({ pageSize: 1 }),
       getArticleList({ pageSize: 1 }),
+      getUserList({ pageSize: 1 }),
     ])
     stats.questionCount = qRes?.total ?? 0
     stats.examCount = eRes?.total ?? 0
     stats.articleCount = aRes?.total ?? 0
+    stats.userCount = uRes?.total ?? 0
   } catch { /* ignore */ }
 })
 </script>

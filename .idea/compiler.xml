@@ -8,6 +8,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="m-code-question" />
+        <module name="m-code-ai" />
         <module name="m-code-knowledge" />
         <module name="m-code-gateway" />
         <module name="m-code-user" />
@@ -19,6 +20,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="m-code-ai" options="-parameters" />
       <module name="m-code-common" options="-parameters" />
       <module name="m-code-exam" options="-parameters" />
       <module name="m-code-gateway" options="-parameters" />

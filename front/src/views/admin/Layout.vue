@@ -31,6 +31,10 @@
           <el-menu-item index="/admin/knowledge-category">知识分类</el-menu-item>
           <el-menu-item index="/admin/learning-path">学习路线</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="system-group">
+          <template #title><el-icon><Setting /></el-icon> 系统管理</template>
+          <el-menu-item index="/admin/user">用户管理</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <el-container>

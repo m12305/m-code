@@ -12,6 +12,7 @@ public interface KnowledgeService {
     void addCategory(KnowledgeCategory category);
 
     Page<Article> pageArticle(Integer pageNum, Integer pageSize, Long categoryId);
+    Page<Article> searchArticle(String keyword, Integer pageNum, Integer pageSize);
     Article getArticleDetail(Long id);
     void addArticle(Article article);
     void updateArticle(Article article);

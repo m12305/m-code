@@ -29,6 +29,10 @@ spring:
           uri: lb://m-code-knowledge
           predicates:
             - Path=/api/knowledge/**
+        - id: ai-service
+          uri: lb://m-code-ai
+          predicates:
+            - Path=/api/ai/**
 
 logging:
   level:

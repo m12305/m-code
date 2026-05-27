@@ -122,6 +122,21 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    public void deleteExam(Long id) {
+        Exam exam = examMapper.selectById(id);
+        if (exam == null) {
+            throw new BusinessException("考试不存在");
+        }
+        examMapper.deleteById(id);
+        examQuestionMapper.delete(new LambdaQueryWrapper<ExamQuestion>()
+                .eq(ExamQuestion::getExamId, id));
+        examAnswerMapper.delete(new LambdaQueryWrapper<ExamAnswer>()
+                .eq(ExamAnswer::getExamId, id));
+        examRecordMapper.delete(new LambdaQueryWrapper<ExamRecord>()
+                .eq(ExamRecord::getExamId, id));
+    }
+
+    @Override
     public void startExam(Long examId, Long userId) {
         Exam exam = getExamDetail(examId);
         if (exam.getStartTime().isAfter(LocalDateTime.now())) {

@@ -168,6 +168,12 @@ const router = createRouter({
           component: () => import('@/views/admin/LearningPathManage.vue'),
           meta: { title: '学习路线管理' },
         },
+        {
+          path: 'user',
+          name: 'UserManage',
+          component: () => import('@/views/admin/UserManage.vue'),
+          meta: { title: '用户管理' },
+        },
       ],
     },
   ],

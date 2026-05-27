@@ -38,6 +38,10 @@ export function getMyExamRecord(examId: string) {
   return request.get(`/exam/${examId}/my-record`)
 }
 
+export function deleteExam(id: string) {
+  return request.delete(`/exam/${id}`)
+}
+
 export function getExamRank(examId: string) {
   return request.get(`/exam/${examId}/rank`)
 }

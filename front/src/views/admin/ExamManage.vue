@@ -18,10 +18,11 @@
       <el-table-column label="状态" width="80">
         <template #default="{row}"><el-tag :type="row.status===1?'success':'info'" size="small">{{ row.status===1?'进行中':'已结束' }}</el-tag></template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="320" fixed="right">
         <template #default="{row}">
           <el-button size="small" @click="showEdit(row)">编辑</el-button>
           <el-button size="small" type="warning" @click="$router.push(`/admin/exam/${row.id}/questions`)">编排题目</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -50,8 +51,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getExamList, createExam, updateExam } from '@/api/exam'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getExamList, createExam, updateExam, deleteExam } from '@/api/exam'
 import { formatDate } from '@/utils/format'
 const loading = ref(false); const dialogVisible = ref(false); const saving = ref(false)
 const tableData = ref<any[]>([]); const total = ref(0); const editing = ref<any>(null)
@@ -64,6 +65,25 @@ async function fetchList() {
 }
 function showAdd() { editing.value = null; form.title = ''; form.description = ''; form.duration = 120; form.startTime = ''; form.endTime = ''; dialogVisible.value = true }
 function showEdit(row: any) { editing.value = row; form.title = row.title; form.description = row.description || ''; form.duration = row.duration; form.startTime = row.startTime; form.endTime = row.endTime; dialogVisible.value = true }
+async function handleDelete(row: any) {
+  try {
+    await ElMessageBox.confirm(`确认删除考试"${row.title}"？将同时删除该考试的所有题目关联、答题记录和答案。`, '确认删除', {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+  try {
+    await deleteExam(row.id)
+    ElMessage.success('删除成功')
+    fetchList()
+  } catch (e) {
+    console.error('删除失败:', e)
+  }
+}
+
 async function handleSave() {
   saving.value = true
   try {
