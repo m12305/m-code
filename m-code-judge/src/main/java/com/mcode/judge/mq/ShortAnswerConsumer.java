@@ -101,6 +101,11 @@ public class ShortAnswerConsumer {
         JsonNode scoreJson = objectMapper.readTree(aiResponse);
         int score = scoreJson.has("score") ? scoreJson.get("score").asInt() : 0;
         String feedback = scoreJson.has("feedback") ? scoreJson.get("feedback").asText() : "";
+        String correctPoints = scoreJson.has("correctPoints") ? scoreJson.get("correctPoints").toString() : "";
+        String missedPoints = scoreJson.has("missedPoints") ? scoreJson.get("missedPoints").toString() : "";
+        String suggestions = scoreJson.has("suggestions") ? scoreJson.get("suggestions").asText() : "";
+
+        feedback = feedback + "\n 答对要点：" +correctPoints + "\n 遗漏要点：" +missedPoints + "\n 改进建议：" + suggestions;
 
         // Store full AI response as judge result
         JudgeResult judgeResult = new JudgeResult();

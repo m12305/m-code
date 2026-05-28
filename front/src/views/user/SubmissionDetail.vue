@@ -36,12 +36,17 @@
             </el-tag>
             <span v-else>-</span>
           </el-descriptions-item>
-          <el-descriptions-item label="耗时">
-            {{ formatTime(submission.timeUsed) }}
+          <el-descriptions-item v-if="isShortAnswer" label="AI评分">
+            <span class="ai-score-text">{{ submission.timeUsed ?? '-' }} / 10</span>
           </el-descriptions-item>
-          <el-descriptions-item label="内存">
-            {{ formatMemory(submission.memoryUsed) }}
-          </el-descriptions-item>
+          <template v-else>
+            <el-descriptions-item label="耗时">
+              {{ formatTime(submission.timeUsed) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="内存">
+              {{ formatMemory(submission.memoryUsed) }}
+            </el-descriptions-item>
+          </template>
           <el-descriptions-item label="提交时间">
             {{ formatDate(submission.createTime) }}
           </el-descriptions-item>
@@ -76,55 +81,86 @@
         <!-- Judge Results -->
         <h3 style="margin-bottom: 12px">判题详情</h3>
         <template v-if="judgeResults.length > 0">
-          <el-table :data="judgeResults" stripe style="width: 100%">
-            <el-table-column prop="testCaseName" label="测试用例" min-width="150" show-overflow-tooltip />
-            <el-table-column label="状态" width="120" align="center">
-              <template #default="{ row }">
-                <el-tag
-                  v-if="row.status != null"
-                  :type="JudgeStatusColor[row.status] as any"
-                  size="small"
-                >
-                  {{ JudgeStatusMap[row.status] ?? '-' }}
-                </el-tag>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="耗时" width="100" align="center">
-              <template #default="{ row }">
-                {{ formatTime(row.timeUsed) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="内存" width="100" align="center">
-              <template #default="{ row }">
-                {{ formatMemory(row.memoryUsed) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="实际输出" min-width="160">
-              <template #default="{ row }">
-                <template v-if="row.actualOutput">
-                  <el-popover
-                    placement="top-start"
-                    :width="400"
-                    trigger="hover"
+          <!-- Short answer: show score and feedback instead of time/memory/error -->
+          <template v-if="isShortAnswer">
+            <el-table :data="judgeResults" stripe style="width: 100%">
+              <el-table-column prop="testCaseName" label="评测项" min-width="120" />
+              <el-table-column label="状态" width="120" align="center">
+                <template #default="{ row }">
+                  <el-tag
+                    v-if="row.status != null"
+                    :type="JudgeStatusColor[row.status] as any"
+                    size="small"
                   >
-                    <template #reference>
-                      <span class="truncated-text">{{ truncateText(row.actualOutput) }}</span>
-                    </template>
-                    <pre style="margin: 0; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto">{{
-                      row.actualOutput
-                    }}</pre>
-                  </el-popover>
+                    {{ JudgeStatusMap[row.status] ?? '-' }}
+                  </el-tag>
+                  <span v-else>-</span>
                 </template>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="错误信息" min-width="160" show-overflow-tooltip>
-              <template #default="{ row }">
-                {{ row.errorMessage || '-' }}
-              </template>
-            </el-table-column>
-          </el-table>
+              </el-table-column>
+              <el-table-column label="评分" width="120" align="center">
+                <template #default="{ row }">
+                  <span class="ai-score-text">{{ row.timeUsed ?? '-' }} / 10</span>
+                </template>
+              </el-table-column>
+            </el-table>
+            <!-- Full feedback displayed below the table -->
+            <div v-for="(row, index) in judgeResults" :key="index" class="feedback-block">
+              <h4>总体评价</h4>
+              <div class="feedback-content">{{ row.errorMessage || '暂无评价' }}</div>
+            </div>
+          </template>
+          <!-- Programming / other types: show full detail table -->
+          <template v-else>
+            <el-table :data="judgeResults" stripe style="width: 100%">
+              <el-table-column prop="testCaseName" label="测试用例" min-width="150" show-overflow-tooltip />
+              <el-table-column label="状态" width="120" align="center">
+                <template #default="{ row }">
+                  <el-tag
+                    v-if="row.status != null"
+                    :type="JudgeStatusColor[row.status] as any"
+                    size="small"
+                  >
+                    {{ JudgeStatusMap[row.status] ?? '-' }}
+                  </el-tag>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="耗时" width="100" align="center">
+                <template #default="{ row }">
+                  {{ formatTime(row.timeUsed) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="内存" width="100" align="center">
+                <template #default="{ row }">
+                  {{ formatMemory(row.memoryUsed) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="实际输出" min-width="160">
+                <template #default="{ row }">
+                  <template v-if="row.actualOutput">
+                    <el-popover
+                      placement="top-start"
+                      :width="400"
+                      trigger="hover"
+                    >
+                      <template #reference>
+                        <span class="truncated-text">{{ truncateText(row.actualOutput) }}</span>
+                      </template>
+                      <pre style="margin: 0; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto">{{
+                        row.actualOutput
+                      }}</pre>
+                    </el-popover>
+                  </template>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="错误信息" min-width="160" show-overflow-tooltip>
+                <template #default="{ row }">
+                  {{ row.errorMessage || '-' }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </template>
         </template>
         <EmptyState v-else description="暂无判题详情" />
       </template>
@@ -135,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getSubmissionDetail, getJudgeResults } from '@/api/judge'
 import {
@@ -153,6 +189,10 @@ const router = useRouter()
 const loading = ref(false)
 const submission = ref<any>(null)
 const judgeResults = ref<any[]>([])
+
+const isShortAnswer = computed(() =>
+  judgeResults.value.some(r => r.testCaseName === 'AI评分')
+)
 
 // Progressive backoff: short intervals first, longer intervals later
 const POLL_INTERVALS = [2000, 2000, 3000, 4000, 5000, 8000, 8000, 10000, 15000, 15000, 20000]
@@ -244,5 +284,33 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ai-score-text {
+  color: #409eff;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.feedback-block {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  border-left: 4px solid #409eff;
+}
+
+.feedback-block h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #303133;
+}
+
+.feedback-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #606266;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

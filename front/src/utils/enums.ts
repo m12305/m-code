@@ -13,6 +13,13 @@ export const QuestionTypeMap: Record<number, string> = {
   [QuestionType.TRUE_FALSE]: '判断题',
 }
 
+export const QuestionTypeNameMap: Record<number, string> = {
+  [QuestionType.PROGRAMMING]: 'PROGRAMMING',
+  [QuestionType.MULTIPLE_CHOICE]: 'MULTIPLE_CHOICE',
+  [QuestionType.SHORT_ANSWER]: 'SHORT_ANSWER',
+  [QuestionType.TRUE_FALSE]: 'TRUE_FALSE',
+}
+
 // 难度
 export enum Difficulty {
   EASY = 1,
@@ -24,6 +31,12 @@ export const DifficultyMap: Record<number, string> = {
   [Difficulty.EASY]: '简单',
   [Difficulty.MEDIUM]: '中等',
   [Difficulty.HARD]: '困难',
+}
+
+export const DifficultyNameMap: Record<number, string> = {
+  [Difficulty.EASY]: 'EASY',
+  [Difficulty.MEDIUM]: 'MEDIUM',
+  [Difficulty.HARD]: 'HARD',
 }
 
 export const DifficultyColor: Record<number, string> = {

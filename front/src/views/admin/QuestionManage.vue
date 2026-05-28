@@ -61,12 +61,12 @@
         </el-form-item>
         <el-form-item label="题目类型" required>
           <el-select v-model="form.type" style="width:100%">
-            <el-option v-for="(v,k) in QuestionTypeMap" :key="k" :label="v" :value="v" />
+            <el-option v-for="(v,k) in QuestionTypeMap" :key="k" :label="v" :value="QuestionTypeNameMap[Number(k)]" />
           </el-select>
         </el-form-item>
         <el-form-item label="难度" required>
           <el-select v-model="form.difficulty" style="width:100%">
-            <el-option v-for="(v,k) in DifficultyMap" :key="k" :label="v" :value="v" />
+            <el-option v-for="(v,k) in DifficultyMap" :key="k" :label="v" :value="DifficultyNameMap[Number(k)]" />
           </el-select>
         </el-form-item>
         <el-form-item label="分类">
@@ -110,7 +110,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getQuestionList, addQuestion, updateQuestion, deleteQuestion, getCategoryList, getSectionList } from '@/api/question'
-import { QuestionTypeMap, DifficultyMap, DifficultyColor } from '@/utils/enums'
+import { QuestionTypeMap, DifficultyMap, DifficultyColor, QuestionTypeNameMap, DifficultyNameMap } from '@/utils/enums'
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -156,8 +156,8 @@ function showEdit(row: any) {
   editing.value = row
   Object.assign(form, {
     title: row.title, description: row.description || '',
-    type: QuestionTypeMap[(row.type as any)?.code ?? row.type] || Object.keys(QuestionTypeMap).find(k => QuestionTypeMap[Number(k)] === row.type) || 'PROGRAMMING',
-    difficulty: DifficultyMap[(row.difficulty as any)?.code ?? row.difficulty] || Object.keys(DifficultyMap).find(k => DifficultyMap[Number(k)] === row.difficulty) || 'EASY',
+    type: getTypeName(row.type),
+    difficulty: getDifficultyName(row.difficulty),
     categoryId: row.categoryId, sectionId: row.sectionId,
     templateCode: row.templateCode || '', testCases: row.testCases || '',
     options: row.options || '', correctAnswer: row.correctAnswer || '', referenceAnswer: row.referenceAnswer || '',
@@ -177,6 +177,16 @@ async function handleSave() {
     dialogVisible.value = false
     fetchList()
   } finally { saving.value = false }
+}
+
+function getTypeName(type: any): string {
+  const code = type?.code ?? type
+  return QuestionTypeNameMap[Number(code)] || 'PROGRAMMING'
+}
+
+function getDifficultyName(difficulty: any): string {
+  const code = difficulty?.code ?? difficulty
+  return DifficultyNameMap[Number(code)] || 'EASY'
 }
 
 async function handleDelete(id: number) {
