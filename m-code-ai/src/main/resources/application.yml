@@ -7,7 +7,7 @@ spring:
     time-zone: Asia/Shanghai
   ai:
     openai:
-      api-key: sk-2c0edd3161114418b178c470e66fcbbe
+      api-key: your-api-key
       base-url: https://api.deepseek.com
       chat:
         options:

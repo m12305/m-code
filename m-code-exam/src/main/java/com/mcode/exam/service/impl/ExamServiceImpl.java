@@ -2,11 +2,14 @@ package com.mcode.exam.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mcode.common.dto.QuestionVO;
 import com.mcode.common.enums.JudgeStatusEnum;
+import com.mcode.common.enums.QuestionTypeEnum;
 import com.mcode.common.exception.BusinessException;
 import com.mcode.common.result.Result;
 import com.mcode.exam.dto.CreateExamDTO;
 import com.mcode.exam.dto.ExamJudgeMessage;
+import com.mcode.exam.dto.JudgeResultVO;
 import com.mcode.exam.dto.JudgeSubmissionVO;
 import com.mcode.exam.dto.SubmitExamDTO;
 import com.mcode.exam.entity.Exam;
@@ -14,6 +17,7 @@ import com.mcode.exam.entity.ExamAnswer;
 import com.mcode.exam.entity.ExamQuestion;
 import com.mcode.exam.entity.ExamRecord;
 import com.mcode.exam.feign.JudgeFeignClient;
+import com.mcode.exam.feign.QuestionFeignClient;
 import com.mcode.exam.mapper.ExamAnswerMapper;
 import com.mcode.exam.mapper.ExamMapper;
 import com.mcode.exam.mapper.ExamQuestionMapper;
@@ -39,6 +43,7 @@ public class ExamServiceImpl implements ExamService {
     private final ExamQuestionMapper examQuestionMapper;
     private final ExamAnswerMapper examAnswerMapper;
     private final JudgeFeignClient judgeFeignClient;
+    private final QuestionFeignClient questionFeignClient;
     private final RabbitTemplate rabbitTemplate;
 
     @Override
@@ -254,7 +259,6 @@ public class ExamServiceImpl implements ExamService {
             if (status == JudgeStatusEnum.PENDING || status == JudgeStatusEnum.RUNNING) {
                 if (answer.getSubmissionId() != null) {
                     try {
-                        //todo JudgeSubmissionVO 和 submission 结构不一样
                         Result<JudgeSubmissionVO> result = judgeFeignClient.getSubmission(answer.getSubmissionId());
                         JudgeSubmissionVO sub = result.getData();
                         if (sub != null && sub.getStatus() != null) {
@@ -276,9 +280,29 @@ public class ExamServiceImpl implements ExamService {
                                 .eq(ExamQuestion::getExamId, record.getExamId())
                                 .eq(ExamQuestion::getQuestionId, answer.getQuestionId()));
                 int questionScore = eq != null ? eq.getScore() : 0;
-                answer.setScore(questionScore);
+                int actualScore = questionScore;
+
+                // 简答题AI评分: 先判断题目类型，再从判题结果中获取实际得分
+                if (answer.getSubmissionId() != null && isShortAnswer(answer.getQuestionId())) {
+                    try {
+                        Result<List<JudgeResultVO>> r = judgeFeignClient.getResults(answer.getSubmissionId());
+                        List<JudgeResultVO> judgeResults = r != null ? r.getData() : null;
+                        if (judgeResults != null) {
+                            for (JudgeResultVO jr : judgeResults) {
+                                if ("AI评分".equals(jr.getTestCaseName()) && jr.getTimeUsed() != null) {
+                                    actualScore = (int) Math.round((jr.getTimeUsed() / 10.0) * questionScore);
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("获取判题结果失败: submissionId={}", answer.getSubmissionId(), e);
+                    }
+                }
+
+                answer.setScore(actualScore);
                 examAnswerMapper.updateById(answer);
-                totalScore += questionScore;
+                totalScore += actualScore;
             }
         }
 
@@ -289,6 +313,17 @@ public class ExamServiceImpl implements ExamService {
         } else if (record.getStatus() != 3) {
             record.setStatus(3);
             examRecordMapper.updateById(record);
+        }
+    }
+
+    private boolean isShortAnswer(Long questionId) {
+        try {
+            Result<QuestionVO> r = questionFeignClient.getQuestionDetail(questionId);
+            QuestionVO qv = r != null ? r.getData() : null;
+            return qv != null && qv.getType() == QuestionTypeEnum.SHORT_ANSWER;
+        } catch (Exception e) {
+            log.error("获取题目类型失败: questionId={}", questionId, e);
+            return false;
         }
     }
 }
