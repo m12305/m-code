@@ -26,12 +26,39 @@ public enum DifficultyEnum {
     }
 
     @JsonCreator  // 反序列化时根据 desc 查找枚举
-    public static DifficultyEnum fromDesc(String desc) {
-        for (DifficultyEnum type : values()) {
-            if (type.desc.equals(desc)) {
-                return type;
+    public static DifficultyEnum fromValue(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("枚举值不能为空");
+        }
+
+        // 情况1：传入的是数字 Integer → 按 code 匹配
+        if (value instanceof Integer code) {
+            for (DifficultyEnum type : values()) {
+                if (type.getCode().equals(code)) {
+                    return type;
+                }
             }
         }
-        throw new IllegalArgumentException("Unknown question type: " + desc);
+
+        // 情况2：传入的是字符串 → 先尝试转数字，再尝试匹配描述
+        String str = value.toString().trim();
+        try {
+            int code = Integer.parseInt(str);
+            for (DifficultyEnum type : values()) {
+                if (type.getCode().equals(code)) {
+                    return type;
+                }
+            }
+        } catch (NumberFormatException e) {
+            // 不是数字 → 按文字 desc 匹配
+            for (DifficultyEnum type : values()) {
+                if (type.getDesc().equals(str)) {
+                    return type;
+                }
+            }
+        }
+
+        // 都不匹配
+        throw new IllegalArgumentException("Unknown question type: " + value);
     }
 }
