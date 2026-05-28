@@ -2,13 +2,13 @@
 
 在线编程刷题平台，支持编程题判题、考试管理、知识库与 AI 辅助学习。
 
-<img title="" src="images/Snipaste_2026-05-28_15-40-35.png" alt="" width="585">
+<img title="" src="images/Snipaste_2026-05-28_15-40-35.png" alt="" width="717">
 
-<img src="images/2026-05-28-15-23-45-image.png" title="" alt="" width="589">
+<img title="" src="images/2026-05-28-15-23-45-image.png" alt="" width="734">
 
-<img src="images/2026-05-28-15-24-28-image.png" title="" alt="" width="592">
+<img title="" src="images/2026-05-28-15-24-28-image.png" alt="" width="735">
 
-<img src="images/2026-05-28-15-24-56-image.png" title="" alt="" width="592">
+<img title="" src="images/2026-05-28-15-24-56-image.png" alt="" width="690">
 
 ## 系统架构
 
